@@ -44,6 +44,7 @@ class vec3 {
         return *this *= 1/t;
     }
 
+    /* optimization: the length function is used which is a call of length_squared. Is there a better way of doing this to avoid multiple function calls? */
     double length() const {
         return std::sqrt(length_squared());
     }
@@ -110,11 +111,13 @@ inline vec3 cross(const vec3& u, const vec3& v) {
                 u.e[2] * v.e[0] - u.e[0] * v.e[2],
                 u.e[0] * v.e[1] - u.e[1] * v.e[0]);
 }
-f
+
+/* normalizing a vector */
 inline vec3 unit_vector(const vec3& v) {
     return v / v.length();
 }
 
+/* generates random poihts inside unit disk */
 inline vec3 random_in_unit_disk() {
     while (true) {
         auto p = vec3(random_double(-1,1), random_double(-1,1), 0);
