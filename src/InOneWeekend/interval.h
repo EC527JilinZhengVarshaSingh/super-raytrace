@@ -29,6 +29,7 @@ class interval {
         return min < x && x < max;
     }
 
+    /* optmization: branch prediction ordering; I think it might need to stay in this order if SIMD can be applied */
     double clamp(double x) const {
         if (x < min) return min;
         if (x > max) return max;
