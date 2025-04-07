@@ -58,10 +58,12 @@ class vec3 {
         return (std::fabs(e[0]) < s) && (std::fabs(e[1]) < s) && (std::fabs(e[2]) < s);
     }
 
+    /* generate arbitrary random vectors */
     static vec3 random() {
         return vec3(random_double(), random_double(), random_double());
     }
 
+    /* generate arbitrary random vectors */
     static vec3 random(double min, double max) {
         return vec3(random_double(min,max), random_double(min,max), random_double(min,max));
     }
@@ -108,7 +110,7 @@ inline vec3 cross(const vec3& u, const vec3& v) {
                 u.e[2] * v.e[0] - u.e[0] * v.e[2],
                 u.e[0] * v.e[1] - u.e[1] * v.e[0]);
 }
-
+f
 inline vec3 unit_vector(const vec3& v) {
     return v / v.length();
 }
@@ -121,6 +123,7 @@ inline vec3 random_in_unit_disk() {
     }
 }
 
+/* random vector normalized */
 inline vec3 random_unit_vector() {
     while (true) {
         auto p = vec3::random(-1,1);
@@ -130,6 +133,7 @@ inline vec3 random_unit_vector() {
     }
 }
 
+/* take dot produt of the surface normal and our random vector to return a vector that is on the correct hemisphere */
 inline vec3 random_on_hemisphere(const vec3& normal) {
     vec3 on_unit_sphere = random_unit_vector();
     if (dot(on_unit_sphere, normal) > 0.0) // In the same hemisphere as the normal
@@ -138,10 +142,12 @@ inline vec3 random_on_hemisphere(const vec3& normal) {
         return -on_unit_sphere;
 }
 
+/* mirrored light reflection, calculate direction with v + 2b; b is scale norm vector n proj. v onto b */
 inline vec3 reflect(const vec3& v, const vec3& n) {
     return v - 2*dot(v,n)*n;
 }
 
+/* refracted ray R' calculated with R' perpendicular + R' parallel to a normal n' */
 inline vec3 refract(const vec3& uv, const vec3& n, double etai_over_etat) {
     auto cos_theta = std::fmin(dot(-uv, n), 1.0);
     vec3 r_out_perp =  etai_over_etat * (uv + cos_theta*n);
