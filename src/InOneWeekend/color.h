@@ -25,7 +25,7 @@ inline double linear_to_gamma(double linear_component)
     return 0;
 }
 
-
+/* added gamma correction with linear_to_gamma */
 void write_color(std::ostream& out, const color& pixel_color) {
     auto r = pixel_color.x();
     auto g = pixel_color.y();
@@ -36,6 +36,7 @@ void write_color(std::ostream& out, const color& pixel_color) {
     g = linear_to_gamma(g);
     b = linear_to_gamma(b);
 
+    /* in this case, bit shifting would not be as straightforward due to FP storage standards */
     // Translate the [0,1] component values to the byte range [0,255].
     static const interval intensity(0.000, 0.999);
     int rbyte = int(256 * intensity.clamp(r));
