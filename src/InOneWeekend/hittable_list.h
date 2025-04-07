@@ -29,6 +29,7 @@ class hittable_list : public hittable {
         objects.push_back(object);
     }
 
+    /* if a ray intersects with any objects, resulting in a hit */
     bool hit(const ray& r, interval ray_t, hit_record& rec) const override {
         hit_record temp_rec;
         bool hit_anything = false;
