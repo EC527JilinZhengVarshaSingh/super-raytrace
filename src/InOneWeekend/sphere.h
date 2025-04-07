@@ -13,7 +13,7 @@
 
 #include "hittable.h"
 
-
+/* inheritance, public from hittable to sphere */
 class sphere : public hittable {
   public:
     sphere(const point3& center, double radius, shared_ptr<material> mat)
