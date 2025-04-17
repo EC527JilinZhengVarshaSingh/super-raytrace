@@ -25,6 +25,8 @@ inline double linear_to_gamma(double linear_component)
     return 0;
 }
 
+/* not parallelizable as is with cout...
+** could build a framebuffer in memory and dump at the end instead of printing in parallel? */
 /* added gamma correction with linear_to_gamma */
 void write_color(std::ostream& out, const color& pixel_color) {
     auto r = pixel_color.x();

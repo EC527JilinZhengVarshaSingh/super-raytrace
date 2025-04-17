@@ -26,6 +26,7 @@ int main() {
     world.add(make_shared<sphere>(point3(0,-1000,0), 1000, ground_material));
 
     /* optimization: this is a small loop, but I wonder if loop unrolling would help. Don't really see a point of accumulators... */
+    /* could build a local hittable_list per thread and merge at the end*/
     for (int a = -11; a < 11; a++) {
         for (int b = -11; b < 11; b++) {
             auto choose_mat = random_double();
