@@ -14,7 +14,7 @@
 #include "hittable.h"
 #include "material.h"
 #include <omp.h>
-
+#include <fstream>
 
 class camera {
   public:
@@ -35,30 +35,39 @@ class camera {
     void render(const hittable& world) {
         initialize();
 
-        std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+        // frame buffer method
+        std::vector<color> framebuffer(image_width * image_height);
 
-        // the biggest meat of parallelization
-        // OpenMP parallel for loop
+        // parallel rendering into the frame buffer
         #pragma omp parallel for schedule(dynamic)
-        for (int j = 0; j < image_height; j++) {
-            // threadsafe logging
-            #pragma omp critical
-            std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
+        for(int j = 0; j < image_height; j++)
+        {
 
-            for (int i = 0; i < image_width; i++) {
+            std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
+            for(int i = 0; i < image_width; i++)
+            {
                 color pixel_color(0,0,0);
-                for (int sample = 0; sample < samples_per_pixel; sample++) {
+                for (int s = 0; s < samples_per_pixel; ++s) {
                     ray r = get_ray(i, j);
                     pixel_color += ray_color(r, max_depth, world);
                 }
-
-                // critical section to protect writing to std::cout
-                #pragma omp critical
-                write_color(std::cout, pixel_samples_scale * pixel_color);
+                framebuffer[j * image_width + i] = pixel_samples_scale * pixel_color;
             }
         }
 
-        std::clog << "\rDone.                 \n";
+        std::clog << "\rRendering complete.     \n";
+
+        // write frame buffer to PPM file
+        std::ofstream out("framebuffer.ppm");
+        out << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+
+        for (int j = 0; j < image_height; ++j) {
+            for (int i = 0; i < image_width; ++i) {
+                write_color(out, framebuffer[j * image_width + i]);
+            }
+        }
+
+        out.close();
     }
 
   private:
