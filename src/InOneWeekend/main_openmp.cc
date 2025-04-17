@@ -10,13 +10,13 @@
 //==============================================================================================
 
 #include "rtweekend.h"
-
-#include "camera.h"
+#include <fstream>
+#include "camera_openmp.h"
 #include "hittable.h"
 #include "hittable_list.h"
 #include "material.h"
 #include "sphere.h"
-
+#include <omp.h>
 
 // world generation
 int main() {
@@ -78,6 +78,19 @@ int main() {
 
     cam.defocus_angle = 0.6;
     cam.focus_dist    = 10.0;
-
+    
+    std::clog << "Using " << omp_get_max_threads() << "OPENMP threads\n";
+    // redirect clog to /dev/null to avoid console I/O time
+    std::ofstream nullstream("/dev/null");
+    std::streambuf* old_clog = std::clog.rdbuf(nullstream.rdbuf());
+    // start the timer
+    auto start = std::chrono::high_resolution_clock::now();
     cam.render(world);
+    // stop the timer
+    auto end = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double> elapsed = end - start;
+    // restore after timing
+    std::clog.rdbuf(old_clog);
+    std::clog << "Elapsed time: " << elapsed.count() << " seconds\n";
 }

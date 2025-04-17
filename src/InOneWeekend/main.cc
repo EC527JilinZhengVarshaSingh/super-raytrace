@@ -16,17 +16,14 @@
 #include "hittable_list.h"
 #include "material.h"
 #include "sphere.h"
+#include <chrono>
 
-
-// world generation
 int main() {
     hittable_list world;
 
     auto ground_material = make_shared<lambertian>(color(0.5, 0.5, 0.5));
     world.add(make_shared<sphere>(point3(0,-1000,0), 1000, ground_material));
 
-    /* optimization: this is a small loop, but I wonder if loop unrolling would help. Don't really see a point of accumulators... */
-    /* could build a local hittable_list per thread and merge at the end*/
     for (int a = -11; a < 11; a++) {
         for (int b = -11; b < 11; b++) {
             auto choose_mat = random_double();
@@ -78,6 +75,15 @@ int main() {
 
     cam.defocus_angle = 0.6;
     cam.focus_dist    = 10.0;
-
+    
+   
+    // start the timer
+    auto start = std::chrono::high_resolution_clock::now();
     cam.render(world);
+    // stop the timer
+    auto end = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double> elapsed = end - start;
+    std::clog<< "Elapsed time: " << elapsed.count() << " seconds\n";
+
 }

@@ -27,6 +27,19 @@ endif()
 set(EXTERNAL
     src/external/stb_image.h
 )
+set(SOURCE_ONE_WEEKEND_OPENMP
+    src/InOneWeekend/main_openmp.cc
+    src/InOneWeekend/camera_openmp.h
+    src/InOneWeekend/color.h
+    src/InOneWeekend/hittable.h
+    src/InOneWeekend/hittable_list.h
+    src/InOneWeekend/interval.h
+    src/InOneWeekend/material.h
+    src/InOneWeekend/ray.h
+    src/InOneWeekend/rtweekend.h
+    src/InOneWeekend/sphere.h
+    src/InOneWeekend/vec3.h
+)
 
 set(SOURCE_ONE_WEEKEND
     src/InOneWeekend/main.cc
@@ -108,6 +121,7 @@ endif()
 # Executables
 add_executable(inOneWeekend ${EXTERNAL} ${SOURCE_ONE_WEEKEND})
 # target_link_libraries(inOneWeekend OpenMP::OpenMP_CXX)
+add_executable(inOneWeekend_openmp ${EXTERNAL} ${SOURCE_ONE_WEEKEND_OPENMP})
 
 add_executable(theNextWeek ${EXTERNAL} ${SOURCE_NEXT_WEEK})
 add_executable(theRestOfYourLife ${EXTERNAL} ${SOURCE_REST_OF_YOUR_LIFE})

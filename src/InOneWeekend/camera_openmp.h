@@ -1,5 +1,5 @@
-#ifndef CAMERA_H
-#define CAMERA_H
+#ifndef CAMERAOPENMP_H
+#define CAMERAOPENMP_H
 //==============================================================================================
 // Originally written in 2016 by Peter Shirley <ptrshrl@gmail.com>
 //
@@ -42,7 +42,7 @@ class camera {
         #pragma omp parallel for schedule(dynamic)
         for(int j = 0; j < image_height; j++)
         {
-
+            /* could change this using local variable for j * image width for one less computation */
             std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
             for(int i = 0; i < image_width; i++)
             {
@@ -62,6 +62,7 @@ class camera {
         out << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
         for (int j = 0; j < image_height; ++j) {
+            /* could change this using local variable for j * image width for one less computation */
             for (int i = 0; i < image_width; ++i) {
                 write_color(out, framebuffer[j * image_width + i]);
             }

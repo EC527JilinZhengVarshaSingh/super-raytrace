@@ -13,8 +13,8 @@
 
 #include "hittable.h"
 #include "material.h"
-#include <omp.h>
-#include <fstream>
+#include <chrono>
+
 
 class camera {
   public:
@@ -31,43 +31,24 @@ class camera {
     double defocus_angle = 0;  // Variation angle of rays through each pixel
     double focus_dist = 10;    // Distance from camera lookfrom point to plane of perfect focus
 
-    // write rendered image to cout
     void render(const hittable& world) {
         initialize();
 
-        // frame buffer method
-        std::vector<color> framebuffer(image_width * image_height);
+        std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
-        // parallel rendering into the frame buffer
-        #pragma omp parallel for schedule(dynamic)
-        for(int j = 0; j < image_height; j++)
-        {
-
+        for (int j = 0; j < image_height; j++) {
             std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
-            for(int i = 0; i < image_width; i++)
-            {
+            for (int i = 0; i < image_width; i++) {
                 color pixel_color(0,0,0);
-                for (int s = 0; s < samples_per_pixel; ++s) {
+                for (int sample = 0; sample < samples_per_pixel; sample++) {
                     ray r = get_ray(i, j);
                     pixel_color += ray_color(r, max_depth, world);
                 }
-                framebuffer[j * image_width + i] = pixel_samples_scale * pixel_color;
+                write_color(std::cout, pixel_samples_scale * pixel_color);
             }
         }
 
-        std::clog << "\rRendering complete.     \n";
-
-        // write frame buffer to PPM file
-        std::ofstream out("framebuffer.ppm");
-        out << "P3\n" << image_width << ' ' << image_height << "\n255\n";
-
-        for (int j = 0; j < image_height; ++j) {
-            for (int i = 0; i < image_width; ++i) {
-                write_color(out, framebuffer[j * image_width + i]);
-            }
-        }
-
-        out.close();
+        std::clog << "\rDone.                 \n";
     }
 
   private:
@@ -81,7 +62,6 @@ class camera {
     vec3   defocus_disk_u;       // Defocus disk horizontal radius
     vec3   defocus_disk_v;       // Defocus disk vertical radius
 
-    // set up everything
     void initialize() {
         image_height = int(image_width / aspect_ratio);
         image_height = (image_height < 1) ? 1 : image_height;
@@ -150,7 +130,6 @@ class camera {
         return center + (p[0] * defocus_disk_u) + (p[1] * defocus_disk_v);
     }
 
-    // return the ray's color
     color ray_color(const ray& r, int depth, const hittable& world) const {
         // If we've exceeded the ray bounce limit, no more light is gathered.
         if (depth <= 0)
@@ -162,7 +141,6 @@ class camera {
             ray scattered;
             color attenuation;
             if (rec.mat->scatter(r, rec, attenuation, scattered))
-                // recursion here - possibility of optimization?
                 return attenuation * ray_color(scattered, depth-1, world);
             return color(0,0,0);
         }
