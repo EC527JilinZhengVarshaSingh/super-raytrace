@@ -18,14 +18,31 @@
 #include "sphere.h"
 #include <chrono>
 
+/* making new scenes, generation for elements boundaries */
+
+
+#define SCENE 1
+#define XLOWER_SCENE -11
+#define ZLOWER_SCENE -11
+#define XUPPER_SCENE 11
+#define ZUPPER_SCENE 11
+
+/*
+#define SCENE 2
+#define XLOWER_SCENE 0
+#define ZLOWER_SCENE 0
+#define XUPPER_SCENE 11
+#define ZUPPER_SCENE 11
+*/
+
 int main() {
     hittable_list world;
 
     auto ground_material = make_shared<lambertian>(color(0.5, 0.5, 0.5));
     world.add(make_shared<sphere>(point3(0,-1000,0), 1000, ground_material));
 
-    for (int a = -11; a < 11; a++) {
-        for (int b = -11; b < 11; b++) {
+    for (int a = XLOWER_SCENE_1; a < XUPPER_SCENE_1; a++) {
+        for (int b = ZLOWER_SCENE_1; b < ZUPPER_SCENE_1; b++) {
             auto choose_mat = random_double();
             point3 center(a + 0.9*random_double(), 0.2, b + 0.9*random_double());
 
@@ -84,7 +101,7 @@ int main() {
    
     // start the timer
     auto start = std::chrono::high_resolution_clock::now();
-    cam.render(world);
+    cam.render(world, SCENE);
     // stop the timer
     auto end = std::chrono::high_resolution_clock::now();
 
