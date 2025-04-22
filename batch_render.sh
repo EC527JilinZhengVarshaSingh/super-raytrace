@@ -19,7 +19,7 @@ for i in {1..10}; do
 
     # Run and time the render, output image with run-specific name
     IMAGE_NAME="image_${WIDTH}_${SCENE_ID}_run${i}.ppm"
-    time build/Debug/inOneWeekend > "produced_image/${IMAGE_NAME}"
+    time build/Debug/inOneWeekend > "produced_images/${IMAGE_NAME}"
 
     # The camera generates this base CSV name
     GENERATED_CSV="image_${WIDTH}_scene${SCENE_ID}.csv"
