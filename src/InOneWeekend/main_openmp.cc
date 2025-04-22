@@ -18,6 +18,17 @@
 #include "sphere.h"
 #include <omp.h>
 
+/* making new scenes, generation for elements boundaries */
+#define XLOWER_SCENE_1 -11
+#define ZLOWER_SCENE_1 -11
+#define XUPPER_SCENE_1 11
+#define ZUPPER_SCENE_1 11
+
+#define XLOWER_SCENE_2 0
+#define ZLOWER_SCENE_2 0
+#define XUPPER_SCENE_2 11
+#define ZUPPER_SCENE_2 11
+
 // world generation
 int main() {
     hittable_list world;
@@ -27,8 +38,8 @@ int main() {
 
     /* optimization: this is a small loop, but I wonder if loop unrolling would help. Don't really see a point of accumulators... */
     /* could build a local hittable_list per thread and merge at the end*/
-    for (int a = -11; a < 11; a++) {
-        for (int b = -11; b < 11; b++) {
+    for (int a = XLOWER_SCENE_2; a < XUPPER_SCENE_2; a++) {
+        for (int b = ZLOWER_SCENE_2; b < ZUPPER_SCENE_2; b++) {
             auto choose_mat = random_double();
             point3 center(a + 0.9*random_double(), 0.2, b + 0.9*random_double());
 

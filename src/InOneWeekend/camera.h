@@ -14,6 +14,8 @@
 #include "hittable.h"
 #include "material.h"
 #include <chrono>
+#include <fstream>
+#include <sstream>
 
 
 class camera {
@@ -31,22 +33,40 @@ class camera {
     double defocus_angle = 0;  // Variation angle of rays through each pixel
     double focus_dist = 10;    // Distance from camera lookfrom point to plane of perfect focus
 
-    void render(const hittable& world) {
+    void render(const hittable& world, int scene_id = 1) {
         initialize();
+
+        // naming for file
+        std::stringstream filename;
+        filename << "image_" << image_width << "_scene" << scene_id << ".csv";
+        std::ofstream csv_out(filename.str());
+
+        csv_out << "x, y, time (us)\n"; // header
 
         std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
         for (int j = 0; j < image_height; j++) {
             std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
             for (int i = 0; i < image_width; i++) {
+                // measuring the entire pixel rendering process, actual cost of computing each pixel
+                auto pixel_start = std::chrono::high_resolution_clock::now();
+
                 color pixel_color(0,0,0);
+                // multiple samples per pixel
                 for (int sample = 0; sample < samples_per_pixel; sample++) {
                     ray r = get_ray(i, j);
                     pixel_color += ray_color(r, max_depth, world);
                 }
+
+                auto pixel_end = std::chrono::high_resolution_clock::now();
+                auto pixel_duration = std::chrono::duration_cast<std::chrono::microseconds>(pixel_end - pixel_start).count();
+
+                // write to CSV
+                csv_out << i << ", " << j << ", " << pixel_duration << "\n";
                 write_color(std::cout, pixel_samples_scale * pixel_color);
             }
         }
+        csv_out.close();
 
         std::clog << "\rDone.                 \n";
     }
