@@ -17,26 +17,9 @@
 #include "material.h"
 #include "sphere.h"
 #include <omp.h>
+#include <chrono>
 
-/* struct to hold scene bounds, used in command line */
-struct SceneBounds {
-    int xlower;
-    int zlower;
-    int xupper;
-    int zupper;
-};
 
-SceneBounds get_scene_bounds(int scene_id) {
-    switch(scene_id) {
-        case 1:
-            return { -11, -11, 11, 11 };
-        case 2:
-            return { 0, 0, 11, 11 };
-        default:
-            std::cerr << "Invalid scene ID. Using default scene bounds.\n";
-            return { -11, -11, 11, 11 };
-    }
-}
 // world generation
 int main(int argc, char* argv[]) {
 
@@ -60,52 +43,117 @@ if (argc > 1) {
 if (argc > 2) {
     schedule_type = argv[2];
 }
-
-    SceneBounds bounds = get_scene_bounds(scene_id);
     hittable_list world;
 
     auto ground_material = make_shared<lambertian>(color(0.5, 0.5, 0.5));
     world.add(make_shared<sphere>(point3(0,-1000,0), 1000, ground_material));
 
-    /* optimization: this is a small loop, but I wonder if loop unrolling would help. Don't really see a point of accumulators... */
-    /* could build a local hittable_list per thread and merge at the end*/
-    for (int a = bounds.xlower; a < bounds.xupper; a++) {
-        for (int b = bounds.zlower; b < bounds.zupper; b++) {
-            auto choose_mat = random_double();
-            point3 center(a + 0.9*random_double(), 0.2, b + 0.9*random_double());
+    std::clog << "Generating scene with ID: " << scene_id << "\n";
+    switch (scene_id) {
+        case 1: {
+            for (int a = -11; a < 11; a++) {
+                for (int b = -11; b < 11; b++) {
+                    auto choose_mat = random_double();
+                    point3 center(a + 0.9 * random_double(), 0.2, b + 0.9 * random_double());
 
-            if ((center - point3(4, 0.2, 0)).length() > 0.9) {
-                shared_ptr<material> sphere_material;
+                    if ((center - point3(4, 0.2, 0)).length() > 0.9) {
+                        shared_ptr<material> sphere_material;
 
-                if (choose_mat < 0.8) {
-                    // diffuse
-                    auto albedo = color::random() * color::random();
-                    sphere_material = make_shared<lambertian>(albedo);
-                    world.add(make_shared<sphere>(center, 0.2, sphere_material));
-                } else if (choose_mat < 0.95) {
-                    // metal
-                    auto albedo = color::random(0.5, 1);
-                    auto fuzz = random_double(0, 0.5);
-                    sphere_material = make_shared<metal>(albedo, fuzz);
-                    world.add(make_shared<sphere>(center, 0.2, sphere_material));
-                } else {
-                    // glass
-                    sphere_material = make_shared<dielectric>(1.5);
-                    world.add(make_shared<sphere>(center, 0.2, sphere_material));
+                        if (choose_mat < 0.8) {
+                            auto albedo = color::random() * color::random();
+                            sphere_material = make_shared<lambertian>(albedo);
+                        } else if (choose_mat < 0.95) {
+                            auto albedo = color::random(0.5, 1);
+                            auto fuzz = random_double(0, 0.5);
+                            sphere_material = make_shared<metal>(albedo, fuzz);
+                        } else {
+                            sphere_material = make_shared<dielectric>(1.5);
+                        }
+                        world.add(make_shared<sphere>(center, 0.2, sphere_material));
+                    }
                 }
             }
+            // Shared spheres in all scenes
+            auto material1 = make_shared<dielectric>(1.5);
+            world.add(make_shared<sphere>(point3(0, 1, 0), 1.0, material1));
+
+            auto material2 = make_shared<lambertian>(color(0.4, 0.2, 0.1));
+            world.add(make_shared<sphere>(point3(-4, 1, 0), 1.0, material2));
+
+            auto material3 = make_shared<metal>(color(0.7, 0.6, 0.5), 0.0);
+            world.add(make_shared<sphere>(point3(4, 1, 0), 1.0, material3));
+            break;
+        }
+        case 2: {
+            for (int a = 5; a < 11; a++) {
+                for (int b = 5; b < 11; b++) {
+                    auto choose_mat = random_double();
+                    point3 center(a + 0.9 * random_double(), 0.2, b + 0.9 * random_double());
+
+                    if ((center - point3(4, 0.2, 0)).length() > 0.9) {
+                        shared_ptr<material> sphere_material;
+
+                        if (choose_mat < 0.8) {
+                            auto albedo = color::random() * color::random();
+                            sphere_material = make_shared<lambertian>(albedo);
+                        } else if (choose_mat < 0.95) {
+                            auto albedo = color::random(0.5, 1);
+                            auto fuzz = random_double(0, 0.5);
+                            sphere_material = make_shared<metal>(albedo, fuzz);
+                        } else {
+                            sphere_material = make_shared<dielectric>(1.5);
+                        }
+                        world.add(make_shared<sphere>(center, 0.2, sphere_material));
+                    }
+                }
+            }
+            // Shared spheres in all scenes
+            auto material1 = make_shared<dielectric>(1.5);
+            world.add(make_shared<sphere>(point3(0, 1, 0), 1.0, material1));
+
+            auto material2 = make_shared<lambertian>(color(0.4, 0.2, 0.1));
+            world.add(make_shared<sphere>(point3(-4, 1, 0), 1.0, material2));
+
+            auto material3 = make_shared<metal>(color(0.7, 0.6, 0.5), 0.0);
+            world.add(make_shared<sphere>(point3(4, 1, 0), 1.0, material3));
+            break;
+        }
+        default: {
+            for (int a = -11; a < 0; a++) {
+                for (int b = -11; b < 0; b++) {
+                    auto choose_mat = random_double();
+                    point3 center(a + 0.9 * random_double(), 0.2, b + 0.9 * random_double());
+
+                    if ((center - point3(4, 0.2, 0)).length() > 0.9) {
+                        shared_ptr<material> sphere_material;
+
+                        if (choose_mat < 0.8) {
+                            auto albedo = color::random() * color::random();
+                            sphere_material = make_shared<lambertian>(albedo);
+                        } else if (choose_mat < 0.95) {
+                            auto albedo = color::random(0.5, 1);
+                            auto fuzz = random_double(0, 0.5);
+                            sphere_material = make_shared<metal>(albedo, fuzz);
+                        } else {
+                            sphere_material = make_shared<dielectric>(1.5);
+                        }
+                        world.add(make_shared<sphere>(center, 0.2, sphere_material));
+                    }
+                }
+            }
+
+            // Shared spheres in all scenes
+            auto material1 = make_shared<dielectric>(1.5);
+            world.add(make_shared<sphere>(point3(0, 1, 0), 1.0, material1));
+
+            auto material2 = make_shared<lambertian>(color(0.4, 0.2, 0.1));
+            world.add(make_shared<sphere>(point3(-4, 1, 0), 1.0, material2));
+
+            auto material3 = make_shared<metal>(color(0.7, 0.6, 0.5), 0.0);
+            world.add(make_shared<sphere>(point3(4, 1, 0), 1.0, material3));
+            break;
         }
     }
-
-    auto material1 = make_shared<dielectric>(1.5);
-    world.add(make_shared<sphere>(point3(0, 1, 0), 1.0, material1));
-
-    auto material2 = make_shared<lambertian>(color(0.4, 0.2, 0.1));
-    world.add(make_shared<sphere>(point3(-4, 1, 0), 1.0, material2));
-
-    auto material3 = make_shared<metal>(color(0.7, 0.6, 0.5), 0.0);
-    world.add(make_shared<sphere>(point3(4, 1, 0), 1.0, material3));
-
     camera cam;
     /* different image_width sizes
     320
