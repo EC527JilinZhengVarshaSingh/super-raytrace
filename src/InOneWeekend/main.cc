@@ -18,15 +18,30 @@
 #include "sphere.h"
 #include <chrono>
 
+int get_env_int(const char* env_var, int default_value) {
+    const char* env_value = std::getenv(env_var);
+    if (env_value) {
+        try {
+            return std::stoi(env_value);
+        } catch (...) {
+            std::cerr << "Invalid " << env_var << " env var; using default (" << default_value << ")\n";
+        }
+    }
+    return default_value;
+}
+
 int main(int argc, char* argv[]) {
+    /* entire timer for program */
+    auto start_entire = std::chrono::high_resolution_clock::now();
     hittable_list world;
 
     auto ground_material = make_shared<lambertian>(color(0.5, 0.5, 0.5));
     world.add(make_shared<sphere>(point3(0,-1000,0), 1000, ground_material));
 
+    /* get scene ID from env variable */
+    int scene_id = get_env_int("SCENE_ID", 1);
+
     /* switch statement for different world generations*/
-    const char* scene_env = std::getenv("SCENE_ID");
-    int scene_id = scene_env ? std::stoi(scene_env) : 1;  // fallback to 1
     switch (scene_id) {
         case 1: {
             std::clog << "Using scene 1: standard random scene\n";
@@ -150,22 +165,23 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // env variable for image width
-    const char* width_env = std::getenv("WIDTH");
-    int image_width = width_env ? std::stoi(width_env) : 340;  // fallback to 340
-    std::clog << "Image width: " << image_width << '\n';
+    // Read image configuration from environment
+    int image_width       = get_env_int("WIDTH", 320);
+    int samples_per_pixel = get_env_int("SAMPLES", 10);
+    int max_depth         = get_env_int("BOUNCES", 20);
+    
+    std::clog << "Image width: " << image_width << "\n";
+    std::clog << "Samples per pixel: " << samples_per_pixel << "\n";
+    std::clog << "Max depth (bounces): " << max_depth << "\n";
 
     camera cam;
-    /* different image_width sizes
-    320
-    640
-    800
-    1920
-    3840*/
-    cam.aspect_ratio      = 16.0 / 9.0;
+    
+    /* aspect ratio for warps */
+    cam.aspect_ratio      = 5.0 / 3.0;
     cam.image_width       = image_width;
-    cam.samples_per_pixel = 10;
-    cam.max_depth         = 20;
+    cam.samples_per_pixel = samples_per_pixel;
+    cam.max_depth         = max_depth;
+    
 
     cam.vfov     = 20;
     cam.lookfrom = point3(13,2,3);
@@ -181,8 +197,13 @@ int main(int argc, char* argv[]) {
     cam.render(world, scene_id);
     // stop the timer
     auto end = std::chrono::high_resolution_clock::now();
+    auto end_entire = std::chrono::high_resolution_clock::now();
 
     std::chrono::duration<double> elapsed = end - start;
-    std::clog<< "Elapsed time: " << elapsed.count() << " seconds\n";
+    std::chrono::duration<double> elapsed_entire = end_entire - start_entire;
+    std::clog<< "Render time: " << elapsed.count() << " seconds\n";
+    std::clog<< "Total elapsed time: " << elapsed_entire.count() << " seconds\n";
 
+    std::clog << "Done.                 \n";
+    return 0;
 }
