@@ -18,19 +18,50 @@
 #include "sphere.h"
 #include <omp.h>
 
-/* making new scenes, generation for elements boundaries */
-#define XLOWER_SCENE_1 -11
-#define ZLOWER_SCENE_1 -11
-#define XUPPER_SCENE_1 11
-#define ZUPPER_SCENE_1 11
+/* struct to hold scene bounds, used in command line */
+struct SceneBounds {
+    int xlower;
+    int zlower;
+    int xupper;
+    int zupper;
+};
 
-#define XLOWER_SCENE_2 0
-#define ZLOWER_SCENE_2 0
-#define XUPPER_SCENE_2 11
-#define ZUPPER_SCENE_2 11
-
+SceneBounds get_scene_bounds(int scene_id) {
+    switch(scene_id) {
+        case 1:
+            return { -11, -11, 11, 11 };
+        case 2:
+            return { 0, 0, 11, 11 };
+        default:
+            std::cerr << "Invalid scene ID. Using default scene bounds.\n";
+            return { -11, -11, 11, 11 };
+    }
+}
 // world generation
-int main() {
+int main(int argc, char* argv[]) {
+
+// default values
+int scene_id = 1;
+std::string schedule_type = "static";
+
+// get SCENE_ID from env if available
+if (const char* env_scene = std::getenv("SCENE_ID")) {
+    try {
+        scene_id = std::stoi(env_scene);
+    } catch (...) {
+        std::cerr << "Invalid SCENE_ID env var; using default (1)\n";
+    }
+}
+
+// override with CLI args if passed
+if (argc > 1) {
+    scene_id = std::stoi(argv[1]);
+}
+if (argc > 2) {
+    schedule_type = argv[2];
+}
+
+    SceneBounds bounds = get_scene_bounds(scene_id);
     hittable_list world;
 
     auto ground_material = make_shared<lambertian>(color(0.5, 0.5, 0.5));
@@ -38,8 +69,8 @@ int main() {
 
     /* optimization: this is a small loop, but I wonder if loop unrolling would help. Don't really see a point of accumulators... */
     /* could build a local hittable_list per thread and merge at the end*/
-    for (int a = XLOWER_SCENE_2; a < XUPPER_SCENE_2; a++) {
-        for (int b = ZLOWER_SCENE_2; b < ZUPPER_SCENE_2; b++) {
+    for (int a = bounds.xlower; a < bounds.xupper; a++) {
+        for (int b = bounds.zlower; b < bounds.zupper; b++) {
             auto choose_mat = random_double();
             point3 center(a + 0.9*random_double(), 0.2, b + 0.9*random_double());
 
@@ -82,8 +113,16 @@ int main() {
     800
     1920
     3840*/
+    int image_width = 340; //default
+    if (const char* env_width = std::getenv("WIDTH")) {
+        try {
+            image_width = std::stoi(env_width);
+        } catch (...) {
+            std::cerr << "Invalid WIDTH env variable; using default (340)\n";
+        }
+    }
     cam.aspect_ratio      = 16.0 / 9.0;
-    cam.image_width       = 340;
+    cam.image_width       = image_width;
     cam.samples_per_pixel = 10;
     cam.max_depth         = 20;
 
@@ -101,7 +140,7 @@ int main() {
     std::streambuf* old_clog = std::clog.rdbuf(nullstream.rdbuf());
     // start the timer
     auto start = std::chrono::high_resolution_clock::now();
-    cam.render(world);
+    cam.render(world, scene_id, schedule_type);
     // stop the timer
     auto end = std::chrono::high_resolution_clock::now();
 

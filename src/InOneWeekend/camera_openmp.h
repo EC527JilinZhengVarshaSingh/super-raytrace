@@ -35,12 +35,12 @@ class camera {
     double focus_dist = 10;    // Distance from camera lookfrom point to plane of perfect focus
 
     // write rendered image to cout
-    void render(const hittable& world, int scene_id = 1) {
+    void render(const hittable& world, int scene_id, const std::string& schedule_type) {
         initialize();
 
         //naming for file
         std::stringstream filename;
-        filename << "openMP_" << image_width << "_scene" << scene_id << ".csv";
+        filename << "openMP_" << image_width << "_scene" << scene_id << "_" << schedule_type << ".csv";
         std::ofstream csv_out(filename.str());
         csv_out << "x, y, time (us)\n";
         // frame buffer method
@@ -49,38 +49,74 @@ class camera {
         std::vector<long long> pixel_times(image_width * image_height);
 
         // parallel rendering into the frame buffer
-        #pragma omp parallel for schedule(dynamic)
-        for(int j = 0; j < image_height; j++)
-        {
+        // check if dynamic or static scheduling is used
+        int schedule_kind = 0; // 0 = static, 1 = dynamic
+        if (schedule_type == "static") {
+            std::clog << "Using static scheduling\n";
+            schedule_kind = 0;
+        } else if (schedule_type == "dynamic") {
+            std::clog << "Using dynamic scheduling\n";
+            schedule_kind = 1;
+        } else {
+            std::cerr << "Invalid scheduling type. Using default static scheduling.\n";
+            schedule_kind = 0;
+        }
+
+        if(schedule_kind == 0) {
+            #pragma omp parallel for schedule(static)
+            for(int j = 0; j < image_height; j++)
+            {
             /* could change this using local variable for j * image width for one less computation */
             std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
-            for(int i = 0; i < image_width; i++)
-            {
-                auto pixel_start = std::chrono::high_resolution_clock::now();
-                color pixel_color(0,0,0);
-                for (int s = 0; s < samples_per_pixel; ++s) {
-                    ray r = get_ray(i, j);
-                    pixel_color += ray_color(r, max_depth, world);
+                for(int i = 0; i < image_width; i++)
+                {
+                    auto pixel_start = std::chrono::high_resolution_clock::now();
+                    color pixel_color(0,0,0);
+                    for (int s = 0; s < samples_per_pixel; ++s) {
+                        ray r = get_ray(i, j);
+                        pixel_color += ray_color(r, max_depth, world);
+                    }
+                    auto pixel_end = std::chrono::high_resolution_clock::now();
+                    auto pixel_duration = std::chrono::duration_cast<std::chrono::microseconds>(pixel_end - pixel_start).count();
+                    framebuffer[j * image_width + i] = pixel_samples_scale * pixel_color;
+                    pixel_times[j * image_width + i] = pixel_duration;
                 }
-                auto pixel_end = std::chrono::high_resolution_clock::now();
-                auto pixel_duration = std::chrono::duration_cast<std::chrono::microseconds>(pixel_end - pixel_start).count();
-                framebuffer[j * image_width + i] = pixel_samples_scale * pixel_color;
-                pixel_times[j * image_width + i] = pixel_duration;
             }
+        } else {
+            #pragma omp parallel for schedule(dynamic)
+            for(int j = 0; j < image_height; j++)
+            {
+                /* could change this using local variable for j * image width for one less computation */
+                std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
+                    for(int i = 0; i < image_width; i++)
+                    {
+                        auto pixel_start = std::chrono::high_resolution_clock::now();
+                        color pixel_color(0,0,0);
+                        for (int s = 0; s < samples_per_pixel; ++s) {
+                            ray r = get_ray(i, j);
+                            pixel_color += ray_color(r, max_depth, world);
+                        }
+                        auto pixel_end = std::chrono::high_resolution_clock::now();
+                        auto pixel_duration = std::chrono::duration_cast<std::chrono::microseconds>(pixel_end - pixel_start).count();
+                        framebuffer[j * image_width + i] = pixel_samples_scale * pixel_color;
+                        pixel_times[j * image_width + i] = pixel_duration;
+                    }
+                }
         }
 
         std::clog << "\rRendering complete.     \n";
 
-        // write frame buffer to PPM file
-        std::stringstream out;
-        out << "openMP_" << image_width << "_scene" << scene_id << ".ppm";
-        std::ofstream ppm_out(out.str());
+        std::stringstream ppm_filename;
+        ppm_filename << "openMP_" << image_width << "_scene" << scene_id  << ".ppm";
+        std::ofstream ppm_out(ppm_filename.str());
         ppm_out << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
         for (int j = 0; j < image_height; ++j) {
             /* could change this using local variable for j * image width for one less computation */
             for (int i = 0; i < image_width; ++i) {
                 write_color(ppm_out, framebuffer[j * image_width + i]);
+                // write to CSV
+                csv_out << i << ", " << j << ", " << pixel_times[j * image_width + i] << "\n";
             }
         }
 
