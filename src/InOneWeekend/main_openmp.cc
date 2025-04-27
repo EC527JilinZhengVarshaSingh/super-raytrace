@@ -19,26 +19,22 @@
 #include <omp.h>
 #include <chrono>
 
-int get_env_int(const char* env_var, int default_value) {
-    const char* env_value = std::getenv(env_var);
-    if (env_value) {
-        try {
-            return std::stoi(env_value);
-        } catch (...) {
-            std::cerr << "Invalid " << env_var << " env var; using default (" << default_value << ")\n";
-        }
-    }
-    return default_value;
-}
 
 // world generation
 int main(int argc, char* argv[]) {
 
-// create encapsulating timer for entire program
-auto start_entire = std::chrono::high_resolution_clock::now();
 // default values
-int scene_id = get_env_int("SCENE_ID", 1);
-std::string schedule_type = "static"; // default scheduling type
+int scene_id = 1;
+std::string schedule_type = "static";
+
+// get SCENE_ID from env if available
+if (const char* env_scene = std::getenv("SCENE_ID")) {
+    try {
+        scene_id = std::stoi(env_scene);
+    } catch (...) {
+        std::cerr << "Invalid SCENE_ID env var; using default (1)\n";
+    }
+}
 
 // override with CLI args if passed
 if (argc > 1) {
@@ -158,22 +154,6 @@ if (argc > 2) {
             break;
         }
     }
-
-    int image_width = get_env_int("WIDTH", 320);
-    int samples = get_env_int("SAMPLES", 10);    // samples per pixel (bounces)
-    int max_depth = get_env_int("DEPTH", 25);    // ray bounce depth
-
-    if (argc > 4) {
-        try { samples = std::stoi(argv[4]); } catch (...) {
-            std::cerr << "Invalid sample count in CLI; using default (" << samples << ")\n";
-        }
-    }
-    if (argc > 5) {
-        try { max_depth = std::stoi(argv[5]); } catch (...) {
-            std::cerr << "Invalid depth in CLI; using default (" << max_depth << ")\n";
-        }
-    }
-
     camera cam;
     /* different image_width sizes
     320
@@ -181,10 +161,18 @@ if (argc > 2) {
     800
     1920
     3840*/
-    cam.aspect_ratio      = 5.0 / 3.0;
+    int image_width = 340; //default
+    if (const char* env_width = std::getenv("WIDTH")) {
+        try {
+            image_width = std::stoi(env_width);
+        } catch (...) {
+            std::cerr << "Invalid WIDTH env variable; using default (340)\n";
+        }
+    }
+    cam.aspect_ratio      = 16.0 / 9.0;
     cam.image_width       = image_width;
-    cam.samples_per_pixel = samples;
-    cam.max_depth         = max_depth;
+    cam.samples_per_pixel = 10;
+    cam.max_depth         = 20;
 
     cam.vfov     = 20;
     cam.lookfrom = point3(13,2,3);
@@ -193,19 +181,8 @@ if (argc > 2) {
 
     cam.defocus_angle = 0.6;
     cam.focus_dist    = 10.0;
-
-    int num_threads = get_env_int("THREADS", omp_get_max_threads());
-    if (argc > 3) {
-        try {
-            num_threads = std::stoi(argv[3]);
-        } catch (...) {
-            std::cerr << "Invalid thread count in CLI; using current value (" << num_threads << ")\n";
-        }
-    }
     
-    omp_set_num_threads(num_threads);
-    std::clog << "Using " << num_threads << "OPENMP threads\n";
-
+    std::clog << "Using " << omp_get_max_threads() << "OPENMP threads\n";
     // redirect clog to /dev/null to avoid console I/O time
     std::ofstream nullstream("/dev/null");
     std::streambuf* old_clog = std::clog.rdbuf(nullstream.rdbuf());
@@ -214,14 +191,9 @@ if (argc > 2) {
     cam.render(world, scene_id, schedule_type);
     // stop the timer
     auto end = std::chrono::high_resolution_clock::now();
-    auto end_entire = std::chrono::high_resolution_clock::now();
 
     std::chrono::duration<double> elapsed = end - start;
-    std::chrono::duration<double> elapsed_entire = end_entire - start_entire;
     // restore after timing
     std::clog.rdbuf(old_clog);
-    std::clog << "Render time: " << elapsed.count() << " seconds\n";
-    std::clog << "Total time: " << elapsed_entire.count() << " seconds\n";
-
-    return 0;
+    std::clog << "Elapsed time: " << elapsed.count() << " seconds\n";
 }
