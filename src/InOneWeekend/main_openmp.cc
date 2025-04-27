@@ -57,8 +57,8 @@ if (argc > 2) {
         case 1: {
             for (int a = -11; a < 11; a++) {
                 for (int b = -11; b < 11; b++) {
-                    auto choose_mat = random_double();
-                    point3 center(a + 0.9 * random_double(), 0.2, b + 0.9 * random_double());
+                    auto choose_mat = random_float();
+                    point3 center(a + 0.9 * random_float(), 0.2, b + 0.9 * random_float());
 
                     if ((center - point3(4, 0.2, 0)).length() > 0.9) {
                         shared_ptr<material> sphere_material;
@@ -68,7 +68,7 @@ if (argc > 2) {
                             sphere_material = make_shared<lambertian>(albedo);
                         } else if (choose_mat < 0.95) {
                             auto albedo = color::random(0.5, 1);
-                            auto fuzz = random_double(0, 0.5);
+                            auto fuzz = random_float(0, 0.5);
                             sphere_material = make_shared<metal>(albedo, fuzz);
                         } else {
                             sphere_material = make_shared<dielectric>(1.5);
@@ -91,8 +91,8 @@ if (argc > 2) {
         case 2: {
             for (int a = 5; a < 11; a++) {
                 for (int b = 5; b < 11; b++) {
-                    auto choose_mat = random_double();
-                    point3 center(a + 0.9 * random_double(), 0.2, b + 0.9 * random_double());
+                    auto choose_mat = random_float();
+                    point3 center(a + 0.9 * random_float(), 0.2, b + 0.9 * random_float());
 
                     if ((center - point3(4, 0.2, 0)).length() > 0.9) {
                         shared_ptr<material> sphere_material;
@@ -102,7 +102,7 @@ if (argc > 2) {
                             sphere_material = make_shared<lambertian>(albedo);
                         } else if (choose_mat < 0.95) {
                             auto albedo = color::random(0.5, 1);
-                            auto fuzz = random_double(0, 0.5);
+                            auto fuzz = random_float(0, 0.5);
                             sphere_material = make_shared<metal>(albedo, fuzz);
                         } else {
                             sphere_material = make_shared<dielectric>(1.5);
@@ -125,8 +125,8 @@ if (argc > 2) {
         default: {
             for (int a = -11; a < 0; a++) {
                 for (int b = -11; b < 0; b++) {
-                    auto choose_mat = random_double();
-                    point3 center(a + 0.9 * random_double(), 0.2, b + 0.9 * random_double());
+                    auto choose_mat = random_float();
+                    point3 center(a + 0.9 * random_float(), 0.2, b + 0.9 * random_float());
 
                     if ((center - point3(4, 0.2, 0)).length() > 0.9) {
                         shared_ptr<material> sphere_material;
@@ -136,7 +136,7 @@ if (argc > 2) {
                             sphere_material = make_shared<lambertian>(albedo);
                         } else if (choose_mat < 0.95) {
                             auto albedo = color::random(0.5, 1);
-                            auto fuzz = random_double(0, 0.5);
+                            auto fuzz = random_float(0, 0.5);
                             sphere_material = make_shared<metal>(albedo, fuzz);
                         } else {
                             sphere_material = make_shared<dielectric>(1.5);

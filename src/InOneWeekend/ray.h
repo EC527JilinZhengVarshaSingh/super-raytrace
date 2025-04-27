@@ -26,7 +26,7 @@ class ray {
 
     // P(t) = A + t*b, where A is ray origin, b is ray direction,
     // and t is ray parameter
-    point3 at(double t) const {
+    point3 at(float t) const {
         return orig + t*dir;
     }
 

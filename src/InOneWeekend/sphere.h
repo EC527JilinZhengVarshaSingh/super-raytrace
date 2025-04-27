@@ -16,7 +16,7 @@
 /* inheritance, public from hittable to sphere */
 class sphere : public hittable {
   public:
-    sphere(const point3& center, double radius, shared_ptr<material> mat)
+    sphere(const point3& center, float radius, shared_ptr<material> mat)
       : center(center), radius(std::fmax(0,radius)), mat(mat) {}
 
     bool hit(const ray& r, interval ray_t, hit_record& rec) const override {
@@ -50,7 +50,7 @@ class sphere : public hittable {
 
   private:
     point3 center;
-    double radius;
+    float radius;
     shared_ptr<material> mat;
 };
 
