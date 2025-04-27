@@ -9,8 +9,8 @@ SAMPLES=(10 100)
 BOUNCES=(25 50)
 
 # Executables
-SERIAL_EXE=build/Debug/inOneWeekend
-OPENMP_EXE=build/Debug/inOneWeekend_openmp
+SERIAL_EXE=build/Release/inOneWeekend
+OPENMP_EXE=build/Release/inOneWeekend_openmp
 
 # Directories
 mkdir -p produced_images
